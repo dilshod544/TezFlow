@@ -28,6 +28,7 @@ model User {
   orders        Order[]
   analytics     AnalyticsLog[]
   notifications Notification[]
+  products      Product[]
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -115,12 +116,39 @@ model Order {
   @@index([createdAt])
 }
 
+// Product / Catalog model
+model Product {
+  id            String    @id @default(cuid())
+  userId        String
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  name          String
+  description   String?
+  price         Decimal   @db.Decimal(10, 2)
+  stock         Int       @default(0)
+  unit          String?   // "dona", "kg", "litr" va h.k.
+  imageUrl      String?
+  isActive      Boolean   @default(true)
+
+  // Relations
+  orderItems    OrderItem[]
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([isActive])
+}
+
 // Order Items
 model OrderItem {
   id            String    @id @default(cuid())
   orderId       String
   order         Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
+  productId     String?
+  product       Product?  @relation(fields: [productId], references: [id], onDelete: SetNull)
+
   productName   String
   quantity      Int
   unitPrice     Decimal   @db.Decimal(10, 2)
@@ -130,6 +158,7 @@ model OrderItem {
   createdAt     DateTime  @default(now())
 
   @@index([orderId])
+  @@index([productId])
 }
 
 // Analytics Logs

@@ -89,27 +89,40 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // 5. Create the Order
+      // 5. Create the Order — narxni mahsulotlar katalogidan qidir
       const orderNumber = `AUTO-${Math.floor(1000 + Math.random() * 9000)}`;
+
+      // Mahsulot nomiga qarab bazadan narx qidir
+      const product = await prisma.product.findFirst({
+        where: {
+          userId: user.id,
+          name: { contains: productName, mode: "insensitive" },
+          isActive: true,
+        },
+      });
+      const unitPrice = product ? Number(product.price) : 0;
+      const totalAmount = unitPrice * quantity;
+
       const order = await prisma.order.create({
         data: {
           userId: user.id,
           customerId: customer.id,
           orderNumber: orderNumber,
           status: "NEW",
-          totalAmount: 0, // Should be calculated based on product price in a real app
+          totalAmount: totalAmount,
           discount: 0,
           tax: 0,
-          finalAmount: 0,
+          finalAmount: totalAmount,
           deliveryAddress: address,
           notes: `Automatic order from Telegram Bot. Text: ${text}`,
           items: {
             create: [
               {
+                productId: product?.id || undefined,
                 productName: productName,
                 quantity: quantity,
-                unitPrice: 0,
-                totalPrice: 0,
+                unitPrice: unitPrice,
+                totalPrice: totalAmount,
               },
             ],
           },
@@ -118,7 +131,9 @@ export async function POST(req: NextRequest) {
 
       // 6. Send confirmation back to Admin/User via Telegram
       if (user.telegramBotToken && user.telegramChatId) {
-        const confirmMsg = `✅ *New Automatic Order!*\n\n📦 *Order:* ${orderNumber}\n👤 *Customer:* ${customerName}\n📱 *Phone:* ${phone}\n📍 *Address:* ${address}\n🛍 *Item:* ${productName} (x${quantity})\n\nView it in TezFlow: http://localhost:3000/dashboard/orders/${order.id}`;
+        const appUrl = process.env.NEXTAUTH_URL || process.env.APP_URL || "http://localhost:3000";
+        const orderUrl = `${appUrl}/dashboard/orders/${order.id}`;
+        const confirmMsg = `✅ *New Automatic Order!*\n\n📦 *Order:* ${orderNumber}\n👤 *Customer:* ${customerName}\n📱 *Phone:* ${phone}\n📍 *Address:* ${address}\n🛍 *Item:* ${productName} (x${quantity})\n💰 *Total:* ${totalAmount.toLocaleString()} so'm\n\nView it in TezFlow: ${orderUrl}`;
         await sendTelegramNotification(user.telegramBotToken, user.telegramChatId, confirmMsg);
       }
     }

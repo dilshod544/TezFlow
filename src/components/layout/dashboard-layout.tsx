@@ -15,6 +15,7 @@ import {
   LogoIcon,
   ChevronDownIcon,
 } from "@/components/icons";
+import { Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn, getInitials } from "@/utils";
 
@@ -33,6 +34,11 @@ const navItems = [
     href: "/dashboard/customers",
     label: "Customers",
     icon: CustomersIcon,
+  },
+  {
+    href: "/dashboard/products",
+    label: "Products",
+    icon: Package,
   },
   {
     href: "/dashboard/analytics",
