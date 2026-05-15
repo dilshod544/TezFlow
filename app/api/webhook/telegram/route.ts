@@ -108,7 +108,7 @@ export async function POST(req: NextRequest) {
           userId: user.id,
           customerId: customer.id,
           orderNumber: orderNumber,
-          status: "NEW",
+          status: "PENDING",
           totalAmount: totalAmount,
           discount: 0,
           tax: 0,

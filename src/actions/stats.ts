@@ -55,6 +55,27 @@ export async function getDashboardStats() {
     })
   );
 
+  const statusCounts = await prisma.order.groupBy({
+    by: ["status"],
+    where: { userId, status: { not: "CANCELLED" } },
+    _count: { status: true },
+  });
+
+  const topCustomers = await prisma.customer.findMany({
+    where: { userId },
+    include: {
+      orders: {
+        where: { status: { not: "CANCELLED" } },
+      },
+    },
+    orderBy: {
+      orders: {
+        _count: "desc",
+      },
+    },
+    take: 5,
+  });
+
   return {
     stats: {
       totalOrders,
@@ -64,5 +85,44 @@ export async function getDashboardStats() {
       averageOrderValue,
     },
     chartData,
+    statusCounts: statusCounts.map((item) => ({
+      status: item.status,
+      count: item._count.status,
+    })),
+    topCustomers: topCustomers.map((customer) => ({
+      id: customer.id,
+      name: `${customer.firstName} ${customer.lastName}`,
+      orders: customer.orders.length,
+    })),
+  };
+}
+
+export async function getAnalyticsOverview() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) throw new Error("Unauthorized");
+
+  const userId = session.user.id;
+  const dashboard = await getDashboardStats();
+
+  const totalCustomers = await prisma.customer.count({ where: { userId } });
+  const pendingOrders = await prisma.order.count({
+    where: { userId, status: { in: ["PENDING", "PROCESSING"] } },
+  });
+  const monthlyRevenue = await prisma.order.aggregate({
+    where: {
+      userId,
+      createdAt: {
+        gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+      },
+      status: { not: "CANCELLED" },
+    },
+    _sum: { finalAmount: true },
+  });
+
+  return {
+    ...dashboard,
+    totalCustomers,
+    pendingOrders,
+    monthlyRevenue: Number(monthlyRevenue._sum.finalAmount || 0),
   };
 }

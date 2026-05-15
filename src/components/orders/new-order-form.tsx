@@ -17,7 +17,7 @@ import { TrashIcon, PlusIcon, Loader2 } from "lucide-react";
 const orderSchema = z.object({
   customerId: z.string().min(1, "Customer is required"),
   orderNumber: z.string(),
-  status: z.enum(["NEW", "CONTACTED", "PACKED", "SHIPPED", "DELIVERED", "CANCELLED"]),
+  status: z.enum(["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED"]),
   deliveryAddress: z.string().optional(),
   notes: z.string().optional(),
   items: z.array(z.object({
@@ -49,7 +49,7 @@ export function NewOrderForm({ customers }: NewOrderFormProps) {
     resolver: zodResolver(orderSchema),
     defaultValues: {
       orderNumber: generateOrderNumber(),
-      status: "NEW",
+      status: "PENDING",
       items: [{ productName: "", quantity: 1, unitPrice: 0, totalPrice: 0 }],
     },
   });
@@ -211,9 +211,8 @@ export function NewOrderForm({ customers }: NewOrderFormProps) {
                   {...register("status")}
                   className="w-full px-3 py-2 rounded-md border border-input bg-background text-sm outline-none focus:ring-2 focus:ring-primary"
                 >
-                  <option value="NEW">New</option>
-                  <option value="CONTACTED">Contacted</option>
-                  <option value="PACKED">Packed</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="PROCESSING">Processing</option>
                   <option value="SHIPPED">Shipped</option>
                 </select>
               </div>

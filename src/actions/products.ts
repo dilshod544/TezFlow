@@ -70,8 +70,16 @@ export async function updateProduct(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const product = await prisma.product.update({
+  const existingProduct = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
+  });
+
+  if (!existingProduct) {
+    throw new Error("Product not found or unauthorized");
+  }
+
+  const product = await prisma.product.update({
+    where: { id: existingProduct.id },
     data,
   });
 
@@ -84,8 +92,16 @@ export async function deleteProduct(id: string) {
   if (!session?.user?.id) throw new Error("Unauthorized");
 
   // Soft delete — mahsulotni o'chirmay faolsizlashtir
-  const product = await prisma.product.update({
+  const existingProduct = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
+  });
+
+  if (!existingProduct) {
+    throw new Error("Product not found or unauthorized");
+  }
+
+  const product = await prisma.product.update({
+    where: { id: existingProduct.id },
     data: { isActive: false },
   });
 
@@ -101,7 +117,7 @@ export async function updateStock(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const product = await prisma.product.findUnique({
+  const product = await prisma.product.findFirst({
     where: { id, userId: session.user.id },
   });
   if (!product) throw new Error("Product not found");

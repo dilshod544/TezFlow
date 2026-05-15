@@ -83,13 +83,12 @@ export function statusColors(status: string): {
     string,
     { bg: string; text: string; dot: string }
   > = {
-    NEW: { bg: "bg-blue-100", text: "text-blue-800", dot: "bg-blue-500" },
-    CONTACTED: {
+    PENDING: { bg: "bg-blue-100", text: "text-blue-800", dot: "bg-blue-500" },
+    PROCESSING: {
       bg: "bg-purple-100",
       text: "text-purple-800",
       dot: "bg-purple-500",
     },
-    PACKED: { bg: "bg-yellow-100", text: "text-yellow-800", dot: "bg-yellow-500" },
     SHIPPED: {
       bg: "bg-orange-100",
       text: "text-orange-800",

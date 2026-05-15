@@ -1,9 +1,11 @@
-export type Role = "ADMIN" | "USER";
+export type Role = "ADMIN" | "USER" | "MANAGER" | "SALES";
 
-export type OrderStatus = 
+export type OrderStatus =
   | "NEW"
   | "CONTACTED"
   | "PACKED"
+  | "PENDING"
+  | "PROCESSING"
   | "SHIPPED"
   | "DELIVERED"
   | "CANCELLED";

@@ -27,28 +27,25 @@ export async function sendTelegramNotification(
 
 export function formatOrderMessage(order: any) {
   const statusLabels: Record<string, string> = {
-    NEW: "🆕 New",
-    CONTACTED: "📞 Contacted",
-    PACKED: "📦 Packed",
+    PENDING: "⏳ Pending",
+    PROCESSING: "🔄 Processing",
     SHIPPED: "🚚 Shipped",
     DELIVERED: "✅ Delivered",
     CANCELLED: "❌ Cancelled",
   };
 
   const status = statusLabels[order.status] || order.status;
-  
+
   return `
-<b>Order Update: ${order.orderNumber}</b>
+<b>Yangi Buyurtma: ${order.orderNumber}</b>
 ---------------------------
 <b>Status:</b> ${status}
-<b>Total:</b> ${order.finalAmount}
+<b>Jami Summa:</b> $${order.finalAmount}
 
-<b>Customer:</b> ${order.customer?.firstName} ${order.customer?.lastName}
-<b>Phone:</b> ${order.customer?.phone}
+<b>Mijoz:</b> ${order.customer?.firstName} ${order.customer?.lastName}
+<b>Telefon:</b> ${order.customer?.phone}
 
-<b>Items:</b>
+<b>Mahsulotlar:</b>
 ${order.items?.map((item: any) => `- ${item.productName} (x${item.quantity})`).join("\n")}
-
-<i>Manage this order in your CRM dashboard.</i>
   `.trim();
 }

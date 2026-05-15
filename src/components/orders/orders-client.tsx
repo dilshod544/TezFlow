@@ -18,6 +18,8 @@ export function OrdersClient({ initialOrders }: OrdersClientProps) {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [filteredOrders, setFilteredOrders] = useState(initialOrders);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PAGE_SIZE = 10;
 
   useEffect(() => {
     let filtered = initialOrders;
@@ -35,7 +37,11 @@ export function OrdersClient({ initialOrders }: OrdersClientProps) {
     }
 
     setFilteredOrders(filtered);
+    setCurrentPage(1);
   }, [searchTerm, statusFilter, initialOrders]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredOrders.length / PAGE_SIZE));
+  const currentOrders = filteredOrders.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
   return (
     <div className="p-6 space-y-6 max-w-7xl mx-auto">
@@ -74,9 +80,8 @@ export function OrdersClient({ initialOrders }: OrdersClientProps) {
               className="px-4 py-2 rounded-lg border-none bg-background/50 shadow-inner text-sm font-medium focus:ring-2 focus:ring-primary outline-none transition-all"
             >
               <option value="all">All Statuses</option>
-              <option value="NEW">New</option>
-              <option value="CONTACTED">Contacted</option>
-              <option value="PACKED">Packed</option>
+              <option value="PENDING">Pending</option>
+              <option value="PROCESSING">Processing</option>
               <option value="SHIPPED">Shipped</option>
               <option value="DELIVERED">Delivered</option>
               <option value="CANCELLED">Cancelled</option>
@@ -119,7 +124,7 @@ export function OrdersClient({ initialOrders }: OrdersClientProps) {
                       </td>
                     </motion.tr>
                   ) : (
-                    filteredOrders.map((order, index) => {
+                    currentOrders.map((order, index) => {
                       const { bg, text } = statusColors(order.status);
                       return (
                         <motion.tr
@@ -167,6 +172,30 @@ export function OrdersClient({ initialOrders }: OrdersClientProps) {
           </div>
         </CardContent>
       </Card>
+
+      {pageCount > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 px-4 py-3 bg-card border border-border rounded-xl">
+          <p className="text-sm text-muted-foreground">
+            Page {currentPage} of {pageCount}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              disabled={currentPage === pageCount}
+              onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+            >
+              Next
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

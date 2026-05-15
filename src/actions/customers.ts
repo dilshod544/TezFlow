@@ -9,24 +9,68 @@ export async function getCustomers() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  return await prisma.customer.findMany({
+  const customers = await prisma.customer.findMany({
     where: { userId: session.user.id },
     orderBy: { firstName: "asc" },
   });
+
+  return customers.map((customer) => ({
+    ...customer,
+    email: customer.email ?? undefined,
+    address: customer.address ?? undefined,
+    city: customer.city ?? undefined,
+    state: customer.state ?? undefined,
+    zipCode: customer.zipCode ?? undefined,
+    country: customer.country ?? undefined,
+    notes: customer.notes ?? undefined,
+  }));
 }
 
 export async function getCustomerById(id: string) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  return await prisma.customer.findUnique({
+  const customer = await prisma.customer.findFirst({
     where: { id, userId: session.user.id },
     include: {
       orders: {
         orderBy: { createdAt: "desc" },
+        include: { items: true },
       },
     },
   });
+
+  if (!customer) return null;
+
+  return {
+    ...customer,
+    email: customer.email ?? undefined,
+    address: customer.address ?? undefined,
+    city: customer.city ?? undefined,
+    state: customer.state ?? undefined,
+    zipCode: customer.zipCode ?? undefined,
+    country: customer.country ?? undefined,
+    notes: customer.notes ?? undefined,
+    orders: customer.orders.map((order) => ({
+      ...order,
+      totalAmount: order.totalAmount.toString(),
+      discount: order.discount.toString(),
+      tax: order.tax.toString(),
+      finalAmount: order.finalAmount.toString(),
+      deliveryAddress: order.deliveryAddress ?? undefined,
+      deliveryCity: order.deliveryCity ?? undefined,
+      deliveryState: order.deliveryState ?? undefined,
+      deliveryZip: order.deliveryZip ?? undefined,
+      notes: order.notes ?? undefined,
+      deliveredAt: order.deliveredAt ?? undefined,
+      items: order.items.map((item) => ({
+        ...item,
+        unitPrice: item.unitPrice.toString(),
+        totalPrice: item.totalPrice.toString(),
+        description: item.description ?? undefined,
+      })),
+    })),
+  };
 }
 
 export async function createCustomer(data: {
@@ -76,8 +120,16 @@ export async function updateCustomer(
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) throw new Error("Unauthorized");
 
-  const customer = await prisma.customer.update({
+  const existingCustomer = await prisma.customer.findFirst({
     where: { id, userId: session.user.id },
+  });
+
+  if (!existingCustomer) {
+    throw new Error("Customer not found or unauthorized");
+  }
+
+  const customer = await prisma.customer.update({
+    where: { id: existingCustomer.id },
     data,
   });
 
@@ -100,8 +152,16 @@ export async function deleteCustomer(id: string) {
     );
   }
 
-  await prisma.customer.delete({
+  const existingCustomer = await prisma.customer.findFirst({
     where: { id, userId: session.user.id },
+  });
+
+  if (!existingCustomer) {
+    throw new Error("Customer not found or unauthorized");
+  }
+
+  await prisma.customer.delete({
+    where: { id: existingCustomer.id },
   });
 
   revalidatePath("/dashboard/customers");
